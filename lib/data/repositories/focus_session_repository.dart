@@ -1,29 +1,80 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:smodi/core/services/database_service.dart';
 import 'package:smodi/data/models/focus_session_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:smodi/data/models/focus_event_model.dart';
+import 'package:uuid/uuid.dart';
 
 /// Repository for managing focus session data.
 ///
-/// This class acts as a mediator between the business logic (BLoCs) and the
-/// data layer (DatabaseService). It provides a clean API for feature-related
-/// data operations, abstracting away the underlying data source details.
+/// This class now handles the logic for saving data to both the local
+/// database and the remote Supabase database, ensuring data can be synced.
 class FocusSessionRepository {
-  final DatabaseService _databaseService;
+  final DatabaseService _localDatabase;
+  final SupabaseClient _supabaseClient;
+  final Connectivity _connectivity;
 
-  FocusSessionRepository(this._databaseService);
+  FocusSessionRepository({
+    required DatabaseService databaseService,
+    required SupabaseClient supabaseClient,
+    required Connectivity connectivity,
+  })  : _localDatabase = databaseService,
+        _supabaseClient = supabaseClient,
+        _connectivity = connectivity;
 
-  /// Saves a completed focus session to the local database.
-  ///
-  /// In a real-world scenario, this would also handle creating related
-  /// focus events, like 'session_started' or 'session_completed'.
+  /// Saves a completed focus session to the local DB and, if online, to Supabase.
   Future<void> saveCompletedSession(FocusSession session) async {
-    // Here, we ensure the session is marked as completed before saving.
+    // Ensure the session has the correct final state before saving.
     final completedSession = session.copyWith(
       status: 'completed',
       endTime: DateTime.now(),
+      // Ensure the user ID is correctly associated from the current user.
+      userId: _supabaseClient.auth.currentUser?.id,
     );
-    await _databaseService.saveFocusSession(completedSession);
 
-    // TODO: Create and save a 'session_completed' FocusEvent.
+    // 1. Always save to the local database first for speed and offline support.
+    print('Attempting to save session to local DB...');
+    await _localDatabase.saveFocusSession(completedSession);
+
+    // 2. Check for an internet connection.
+    final connectivityResult = await _connectivity.checkConnectivity();
+    if (connectivityResult.contains(ConnectivityResult.none)) {
+      print('Device is offline. Skipping cloud sync.');
+      return; // Exit if offline
+    }
+
+    // 3. If online, also save to the Supabase cloud database.
+    try {
+      print('Device is online. Attempting to save session to Supabase...');
+      await _supabaseClient
+          .from('focus_sessions')
+          .upsert(completedSession.toMap());
+      print('✅ Session ${completedSession.sessionId} synced to Supabase.');
+    } catch (e) {
+      // Log errors if the cloud sync fails for any reason (e.g., policy error).
+      print('❌ Supabase sync failed: $e');
+    }
+  }
+
+  Future<void> saveFocusEvent(
+      Map<String, dynamic> eventData, String? currentSessionId) async {
+    // Validate required fields
+    if (!eventData.containsKey('event')) {
+      throw ArgumentError('Event data must contain "event" field');
+    }
+
+    final event = FocusEvent(
+      eventId: const Uuid().v4(),
+      sessionId: currentSessionId,
+      eventType: eventData['event']?.toString() ?? 'unknown',
+      timestamp: DateTime.now(),
+      details: eventData['details'] as Map<String, dynamic>? ?? {},
+    );
+    await _localDatabase.saveFocusEvent(event);
+  }
+
+  Future<List<FocusEvent>> getAllFocusEvents() async {
+    return await _localDatabase.getAllFocusEvents();
   }
 }
 

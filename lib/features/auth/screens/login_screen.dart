@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smodi/core/di/injection_container.dart';
 import 'package:smodi/core/services/auth_service.dart';
 import 'package:smodi/features/auth/screens/register_screen.dart';
+import 'package:smodi/features/sync/screens/qr_sync_role_selection_screen.dart';
 
 /// The Login Screen, matching the sitemap design.
 class LoginScreen extends StatefulWidget {
@@ -68,6 +69,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) => const QrSyncRoleSelectionScreen()),
+                    );
+                  },
+                  child: const Text('Sync Data Between My Devices (Offline)'),
+                ),
                 Text(
                   'Sign in to continue',
                   textAlign: TextAlign.center,

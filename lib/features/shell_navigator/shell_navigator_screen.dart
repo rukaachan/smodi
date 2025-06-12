@@ -1,12 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:smodi/core/di/injection_container.dart';
+import 'package:smodi/core/services/auth_service.dart';
+import 'package:smodi/features/auth/screens/camera_control_screen.dart';
+import 'package:smodi/features/auth/screens/insights_screen.dart';
 import 'package:smodi/features/focus_session/screens/focus_session_screen.dart';
+import 'package:smodi/features/settings/screens/settings_screen.dart';
 
 /// The main application shell that holds the bottom navigation bar.
-///
-/// This screen acts as the primary container for the main features of the app,
-/// allowing the user to switch between them seamlessly. It directly corresponds
-/// to the "Layar Beranda" in the sitemap.
 class ShellNavigatorScreen extends StatefulWidget {
   const ShellNavigatorScreen({super.key});
 
@@ -17,13 +18,11 @@ class ShellNavigatorScreen extends StatefulWidget {
 class _ShellNavigatorScreenState extends State<ShellNavigatorScreen> {
   int _selectedIndex = 0;
 
-  // A list of the main feature screens. For now, others are placeholders.
-  // This directly implements the navigation structure from the sitemap.
   static const List<Widget> _widgetOptions = <Widget>[
     FocusSessionScreen(),
-    PlaceholderWidget(text: 'AI Insights & Activity'), // Placeholder for F2
-    PlaceholderWidget(text: 'Camera Control & View'), // Placeholder for F3
-    PlaceholderWidget(text: 'Settings & Personalization'), // Placeholder for F4
+    InsightsScreen(),
+    CameraControlScreen(),
+    SettingsScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -59,7 +58,6 @@ class _ShellNavigatorScreenState extends State<ShellNavigatorScreen> {
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        // These properties are essential for a modern look with more than 3 items.
         type: BottomNavigationBarType.fixed,
         backgroundColor: Theme.of(context).colorScheme.surface,
         selectedItemColor: Theme.of(context).colorScheme.primary,
@@ -77,10 +75,15 @@ class PlaceholderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.titleLarge,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(text),
+      ),
+      body: Center(
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
       ),
     );
   }

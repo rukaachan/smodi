@@ -11,7 +11,6 @@ Future<void> main() async {
   // --- BOOTSTRAPPING ---
   //
 
-  // --- THIS IS THE CRUCIAL FIX FOR DESKTOP ---
   // The sqflite package requires a specific database factory implementation
   // for desktop platforms (Windows, macOS, Linux) that uses FFI.
   // We must initialize it before any sqflite-related code is called.

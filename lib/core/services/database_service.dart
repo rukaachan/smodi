@@ -1,3 +1,4 @@
+import 'package:smodi/data/models/focus_event_model.dart';
 import 'package:smodi/data/models/focus_session_model.dart';
 
 /// Abstract interface for the database service.
@@ -13,6 +14,7 @@ abstract class DatabaseService {
   /// Saves a focus session to the database.
   Future<void> saveFocusSession(FocusSession session);
 
-  // Future<void> saveFocusEvent(FocusEvent event); // Example for later
-  // Future<List<FocusSession>> getFocusSessions(String userId); // Example for later
+  Future<void> saveFocusEvent(FocusEvent event);
+
+  Future<List<FocusEvent>> getAllFocusEvents();
 }

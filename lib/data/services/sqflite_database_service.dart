@@ -1,20 +1,15 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:smodi/core/services/database_service.dart';
+import 'package:smodi/data/models/focus_event_model.dart';
 import 'package:smodi/data/models/focus_session_model.dart';
 
-/// The SQLite implementation of the DatabaseService.
-///
-/// This class handles all direct interactions with the local SQLite database,
-/// including opening the connection, creating tables, and executing CRUD queries.
 class SqfliteDatabaseService implements DatabaseService {
   Database? _database;
-
-  /// The name of the database file.
   static const String _dbName = 'smodi.db';
 
-  /// SQL command to create the `focus_sessions` table.
-  /// This schema is a direct translation from the provided database design document.
+  static const int _dbVersion = 3;
+
   static const String _createFocusSessionsTable = '''
     CREATE TABLE focus_sessions (
       session_id TEXT PRIMARY KEY,
@@ -30,9 +25,27 @@ class SqfliteDatabaseService implements DatabaseService {
     )
   ''';
 
-  // NOTE: Other tables from the schema will be added here in later phases.
-  // static const String _createFocusEventsTable = ...
-  // static const String _createUsersTable = ...
+  static const String _createFocusEventsTable = '''
+    CREATE TABLE focus_events (
+      event_id TEXT PRIMARY KEY,
+      session_id TEXT,
+      event_type TEXT NOT NULL,
+      timestamp TEXT NOT NULL,
+      duration_sec INTEGER,
+      details TEXT
+    )
+  ''';
+
+  static const String _createVoiceMotivatorsTable = '''
+    CREATE TABLE voice_motivators (
+      voice_id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      is_default INTEGER NOT NULL,
+      user_id TEXT,
+      last_modified_at TEXT NOT NULL
+    )
+  ''';
 
   @override
   Future<void> init() async {
@@ -43,16 +56,30 @@ class SqfliteDatabaseService implements DatabaseService {
 
     _database = await openDatabase(
       path,
-      version: 1,
+      version: _dbVersion, // Use the new version number
       onCreate: (db, version) async {
-        // Execute all table creation commands when the DB is first created.
+        // This runs only if the DB doesn't exist at all.
+        print('Database onCreate: Creating all tables for version $version...');
         await db.execute(_createFocusSessionsTable);
-        // await db.execute(_createFocusEventsTable);
+        await db.execute(_createFocusEventsTable);
+      },
+      // --- THIS IS THE FIX: Add the onUpgrade method ---
+      onUpgrade: (db, oldVersion, newVersion) async {
+        print(
+            'Database onUpgrade: Upgrading from version $oldVersion to $newVersion...');
+        if (oldVersion < 2) {
+          await db.execute(_createFocusEventsTable);
+        }
+        // --- THIS IS THE FIX: Add the new migration step ---
+        if (oldVersion < 3) {
+          await db.execute(_createVoiceMotivatorsTable);
+          print('Upgraded database by creating voice_motivators table.');
+        }
       },
     );
   }
 
-  /// A helper to ensure the database is initialized before use.
+  // ... rest of the file remains the same ...
   Future<Database> get _db async {
     if (_database == null) {
       await init();
@@ -63,14 +90,39 @@ class SqfliteDatabaseService implements DatabaseService {
   @override
   Future<void> saveFocusSession(FocusSession session) async {
     final database = await _db;
-    // Using `insert` with `conflictAlgorithm: .replace` is an "upsert" operation.
-    // It will INSERT a new row if the primary key doesn't exist, or
-    // UPDATE the existing row if it does. This is perfect for our needs.
     await database.insert(
       'focus_sessions',
       session.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
     print('✅ Session ${session.sessionId} saved to local DB.');
+  }
+
+  @override
+  Future<void> saveFocusEvent(FocusEvent event) async {
+    final database = await _db;
+    await database.insert(
+      'focus_events',
+      event.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    print('✅ Event ${event.eventId} saved to local DB.');
+  }
+
+  @override
+  Future<List<FocusEvent>> getAllFocusEvents() async {
+    final database = await _db;
+    final List<Map<String, dynamic>> maps = await database.query(
+      'focus_events',
+      orderBy: 'timestamp DESC',
+    );
+
+    if (maps.isEmpty) {
+      return [];
+    }
+
+    return List.generate(maps.length, (i) {
+      return FocusEvent.fromMap(maps[i]);
+    });
   }
 }

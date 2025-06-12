@@ -41,13 +41,11 @@ class SupabaseAuthService implements AuthService {
   @override
   Future<void> signUp({required String email, required String password}) async {
     try {
-      // We now provide the `emailRedirectTo` parameter.
-      // Supabase will use this to construct the confirmation link.
-      // This MUST match one of the URLs in your Supabase URL Configuration.
+      // We no longer need a custom emailRedirectTo. Supabase will use the
+      // default Site URL from your dashboard settings.
       await _supabaseClient.auth.signUp(
         email: email,
         password: password,
-        emailRedirectTo: 'io.supabase.smodi://login-callback/',
       );
     } on AuthException catch (e) {
       print('Error signing up: ${e.message}');
