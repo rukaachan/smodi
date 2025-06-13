@@ -29,6 +29,23 @@ class CameraControlBloc extends Bloc<CameraControlEvent, CameraControlState> {
       _channel = WebSocketChannel.connect(Uri.parse(serverUrl));
       print('WebSocket: Connecting to $serverUrl');
 
+      if (event.serverUrl.isEmpty) {
+        throw Exception('Socket server URL is empty.');
+      }
+
+      // Ensure the URL is valid and starts with http or https before replacing.
+      String wsUrl;
+      if (event.serverUrl.startsWith('https://')) {
+        wsUrl = event.serverUrl.replaceFirst('https', 'wss');
+      } else if (event.serverUrl.startsWith('http://')) {
+        wsUrl = event.serverUrl.replaceFirst('http', 'ws');
+      } else {
+        throw Exception('Invalid socket server URL format.');
+      }
+
+      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      print('WebSocket: Connecting to $wsUrl');
+
       _channel!.sink.add(jsonEncode({'event': 'register_flutter_app'}));
       emit(state.copyWith(isConnected: true));
 

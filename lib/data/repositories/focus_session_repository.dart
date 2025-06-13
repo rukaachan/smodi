@@ -1,4 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:smodi/core/di/injection_container.dart';
+import 'package:smodi/core/services/auth_service.dart';
 import 'package:smodi/core/services/database_service.dart';
 import 'package:smodi/data/models/focus_session_model.dart';
 import 'package:smodi/data/models/local_session_model.dart';
@@ -99,6 +101,60 @@ class FocusSessionRepository {
 
   Future<void> mergeSyncPayload(SyncPayload payload) async {
     await _localDatabase.mergeSyncPayload(payload);
+  }
+
+  /// Gets all locally created/modified records that haven't been synced yet.
+  Future<SyncPayload> getLocalChanges() async {
+    return await _localDatabase.getLocalChanges();
+  }
+
+  /// Pushes a payload of local changes to the Supabase cloud.
+  Future<void> pushChangesToSupabase(SyncPayload payload) async {
+    if (payload.sessions.isNotEmpty) {
+      await _supabaseClient.from('focus_sessions').upsert(
+            payload.sessions.map((s) => s.toMap()).toList(),
+          );
+    }
+    if (payload.events.isNotEmpty) {
+      await _supabaseClient.from('focus_events').upsert(
+            payload.events.map((e) => e.toMap()).toList(),
+          );
+    }
+  }
+
+  /// Marks a payload of local records as 'synced' in the local DB.
+  Future<void> markAsSynced(SyncPayload payload) async {
+    await _localDatabase.markAsSynced(payload);
+  }
+
+  /// Fetches all data for the current user from Supabase.
+  Future<SyncPayload> getFullRemotePayload() async {
+    final userId = _supabaseClient.auth.currentUser?.id;
+    if (userId == null) throw Exception('User not authenticated');
+
+    final sessionResponse = await _supabaseClient
+        .from('focus_sessions')
+        .select()
+        .eq('user_id', userId);
+
+    final eventResponse = await _supabaseClient
+        .from('focus_events')
+        .select('*, focus_sessions(user_id)') // Join to filter by user
+        .eq('focus_sessions.user_id', userId);
+
+    final sessions =
+        (sessionResponse as List).map((e) => FocusSession.fromMap(e)).toList();
+    final events =
+        (eventResponse as List).map((e) => FocusEvent.fromMap(e)).toList();
+
+    // The user object in the remote payload is not needed as we are already logged in.
+    final user = await sl<AuthService>().getCurrentUserSession();
+    return SyncPayload(user: user!, sessions: sessions, events: events);
+  }
+
+  /// Merges a payload of remote data into the local database.
+  Future<void> mergeRemotePayload(SyncPayload payload) async {
+    return _localDatabase.mergeSyncPayload(payload);
   }
 }
 

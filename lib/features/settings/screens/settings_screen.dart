@@ -1,14 +1,11 @@
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smodi/core/di/injection_container.dart';
 import 'package:smodi/core/services/auth_service.dart';
-import 'package:smodi/features/sync/screens/scan_connection_qr_screen.dart';
-// import 'package:smodi/features/sync/screens/display_auth_qr_screen.dart';
-import 'package:smodi/features/sync/screens/manual_data_transfer_screen.dart';
-import 'package:smodi/features/sync/screens/scan_qr_screen.dart';
+import 'package:smodi/core/services/database_service.dart';
 // import 'package:smodi/features/settings/screens/voice_motivator_screen.dart';
-// import 'package:smodi/features/sync/screens/generate_auth_qr_screen.dart';
+// import 'package:smodi/features/sync/screens/discover_devices_screen.dart';
+import 'package:smodi/features/sync/screens/manual_data_transfer_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -26,60 +23,43 @@ class SettingsScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(CupertinoIcons.speaker_2_fill),
             title: const Text('Voice Motivators'),
-            trailing: const Icon(CupertinoIcons.right_chevron),
             onTap: () {
               // Navigator.of(context).push(
-              //   MaterialPageRoute(builder: (_) => const VoiceMotivatorScreen()),
-              // );
-            },
-          ),
-          ListTile(
-            leading: const Icon(CupertinoIcons.shield_fill),
-            title: const Text('Focus Shield Rules'),
-            trailing: const Icon(CupertinoIcons.right_chevron),
-            onTap: () {
-              // TODO: Navigate to ShieldRulesScreen (for a later phase)
+              //     MaterialPageRoute(builder: (_) => const VoiceMotivatorScreen()),
+              //     );
             },
           ),
           const Divider(),
-          // --- NEW, SEPARATED QR FEATURES ---
           ListTile(
-            leading: const Icon(CupertinoIcons.qrcode_viewfinder),
+            leading: const Icon(CupertinoIcons.device_laptop),
             title: const Text('Authorize New Device'),
-            subtitle: const Text('Scan another device to log it in'),
+            subtitle: const Text('Log in on another device on your network'),
             onTap: () {
-              // The trusted device always opens its scanner.
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const ScanConnectionQrScreen()));
+              // Navigator.of(context).push(MaterialPageRoute(
+              //     builder: (_) => const DiscoverDevicesScreen()));
             },
           ),
           ListTile(
             leading: const Icon(Icons.sync_alt),
             title: const Text('Manual Data Transfer'),
-            subtitle: const Text('Transfer all data to/from another device'),
+            subtitle: const Text('Force sync all data to/from another device'),
             onTap: () {
-              // This navigates to a screen for the full DATA transfer flow.
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                    builder: (_) => const ManualDataTransferScreen()),
-              );
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const ManualDataTransferScreen()));
             },
           ),
           const Divider(),
           ListTile(
-            leading: const Icon(CupertinoIcons.question_circle_fill),
-            title: const Text('Help & FAQ'),
-            trailing: const Icon(CupertinoIcons.right_chevron),
+            leading: const Icon(Icons.bug_report, color: Colors.orangeAccent),
+            title: const Text('Debug: Print Local DB'),
+            subtitle: const Text('Shows DB contents in the debug console'),
             onTap: () {
-              // TODO: Navigate to HelpScreen
-            },
-          ),
-          ListTile(
-            leading: const Icon(CupertinoIcons.info_circle_fill),
-            title: const Text('About Smodi'),
-            trailing: const Icon(CupertinoIcons.right_chevron),
-            onTap: () {
-              // TODO: Navigate to AboutScreen
+              sl<DatabaseService>().debugPrintAllData();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content:
+                        Text('Database contents printed to debug console.')),
+              );
             },
           ),
           const Divider(),
@@ -93,7 +73,8 @@ class SettingsScreen extends StatelessWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('Sign Out?'),
-                  content: const Text('Are you sure you want to sign out?'),
+                  content: const Text(
+                      'This will delete all local data on this device. It will be re-synced from the cloud the next time you log in.'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(false),
@@ -109,7 +90,6 @@ class SettingsScreen extends StatelessWidget {
 
               if (didRequestSignOut ?? false) {
                 await authService.signOut();
-                // The AuthGate will handle navigation automatically.
               }
             },
           ),

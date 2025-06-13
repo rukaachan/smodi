@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:smodi/core/di/injection_container.dart';
 import 'package:smodi/core/services/auth_service.dart';
+import 'package:smodi/features/auth/screens/app_shell.dart';
 import 'package:smodi/features/auth/screens/register_screen.dart';
 import 'package:smodi/features/sync/screens/display_connection_qr_screen.dart';
 
@@ -35,6 +36,13 @@ class _LoginScreenState extends State<LoginScreen> {
       await sl<AuthService>().signIn(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim());
+
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const AppShell()),
+          (route) => false,
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
