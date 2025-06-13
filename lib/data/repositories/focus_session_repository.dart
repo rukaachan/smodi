@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:smodi/data/models/focus_event_model.dart';
 import 'package:uuid/uuid.dart';
 import 'package:smodi/data/models/sync_payload_model.dart';
+import 'package:smodi/core/services/logging_service.dart';
 
 /// Repository for managing focus session data.
 ///
@@ -37,26 +38,28 @@ class FocusSessionRepository {
     );
 
     // 1. Always save to the local database first for speed and offline support.
-    print('Attempting to save session to local DB...');
+    LoggingService.debug('Attempting to save session to local DB...');
     await _localDatabase.saveFocusSession(completedSession);
 
     // 2. Check for an internet connection.
     final connectivityResult = await _connectivity.checkConnectivity();
     if (connectivityResult.contains(ConnectivityResult.none)) {
-      print('Device is offline. Skipping cloud sync.');
+      LoggingService.warning('Device is offline. Skipping cloud sync.');
       return; // Exit if offline
     }
 
     // 3. If online, also save to the Supabase cloud database.
     try {
-      print('Device is online. Attempting to save session to Supabase...');
+      LoggingService.debug(
+          'Device is online. Attempting to save session to Supabase...');
       await _supabaseClient
           .from('focus_sessions')
           .upsert(completedSession.toMap());
-      print('✅ Session ${completedSession.sessionId} synced to Supabase.');
+      LoggingService.info(
+          'Session ${completedSession.sessionId} synced to Supabase');
     } catch (e) {
       // Log errors if the cloud sync fails for any reason (e.g., policy error).
-      print('❌ Supabase sync failed: $e');
+      LoggingService.error('Supabase sync failed', e);
     }
   }
 

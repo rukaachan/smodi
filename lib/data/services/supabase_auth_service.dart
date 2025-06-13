@@ -2,6 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smodi/core/services/auth_service.dart';
 import 'package:smodi/core/services/database_service.dart';
+import 'package:smodi/core/services/logging_service.dart';
 import 'package:smodi/core/services/sync_service.dart';
 import 'package:smodi/data/models/local_session_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -36,7 +37,8 @@ class SupabaseAuthService implements AuthService {
       if (newUserId == null) throw Exception('Sign in failed.');
 
       if (lastUserId != null && lastUserId != newUserId) {
-        print('Account switch detected! Syncing old user data before wiping.');
+        LoggingService.info(
+            'Account switch detected! Syncing old user data before wiping.');
         await _syncService.pushOnlySync();
         await _databaseService.wipeDatabase();
       }
@@ -52,7 +54,7 @@ class SupabaseAuthService implements AuthService {
   Future<void> signOut() async {
     await _supabaseClient.auth.signOut();
     await _secureStorage.delete(key: _localSessionKey);
-    print(
+    LoggingService.info(
         'Sign out complete: Session cleared. Local data preserved for next sync.');
   }
 
@@ -128,7 +130,8 @@ class SupabaseAuthService implements AuthService {
               await _supabaseClient.auth.setSession(localSession.refreshToken);
 
           if (response.user != null) {
-            print('✅ Session successfully recovered from secure storage.');
+            LoggingService.info(
+                '✅ Session successfully recovered from secure storage.');
             // After recovery, it's good practice to re-cache the session
             // in case a new refresh token was issued.
             await cacheCurrentSession();
@@ -137,7 +140,7 @@ class SupabaseAuthService implements AuthService {
             await signOut(); // Sign out completely to clear bad data.
           }
         } catch (e) {
-          print(
+          LoggingService.error(
               '❌ Failed to recover session, token might be expired or invalid: $e');
           // The token is bad, so sign out to clear everything.
           await signOut();

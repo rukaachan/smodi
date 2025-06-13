@@ -40,18 +40,15 @@ abstract class FocusSessionState extends Equatable {
 }
 
 class TimerInitial extends FocusSessionState {
-  const TimerInitial(int duration, FocusSession session)
-      : super(duration, session);
+  const TimerInitial(super.duration, super.session);
 }
 
 class TimerRunInProgress extends FocusSessionState {
-  const TimerRunInProgress(int duration, FocusSession session)
-      : super(duration, session);
+  const TimerRunInProgress(super.duration, super.session);
 }
 
 class TimerRunPause extends FocusSessionState {
-  const TimerRunPause(int duration, FocusSession session)
-      : super(duration, session);
+  const TimerRunPause(super.duration, super.session);
 }
 
 class TimerRunComplete extends FocusSessionState {

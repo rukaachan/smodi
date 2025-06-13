@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:smodi/core/di/injection_container.dart';
 import 'package:smodi/core/services/auth_service.dart';
+import 'package:smodi/core/services/logging_service.dart';
 import 'package:smodi/data/models/sync_payload_model.dart';
 import 'package:smodi/data/repositories/focus_session_repository.dart';
 
@@ -25,8 +26,9 @@ class _ScanConnectionQrScreenState extends State<ScanConnectionQrScreen> {
       final authService = sl<AuthService>();
       final repo = sl<FocusSessionRepository>();
       final user = await authService.getCurrentUserSession();
-      if (user == null)
+      if (user == null) {
         throw Exception('You must be logged in to authorize a new device.');
+      }
 
       final dataPayload = await repo.getFullSyncPayload();
       final fullPayload = SyncPayload(
@@ -34,7 +36,7 @@ class _ScanConnectionQrScreenState extends State<ScanConnectionQrScreen> {
           sessions: dataPayload.sessions,
           events: dataPayload.events);
 
-      print('Sending payload to $url/sync');
+      LoggingService.info('Sending payload to $url/sync');
       final response = await http.post(
         Uri.parse('$url/sync'),
         headers: {'Content-Type': 'application/json'},

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smodi/core/services/logging_service.dart';
 import 'package:smodi/data/repositories/focus_session_repository.dart';
 import 'package:smodi/features/camera_control/bloc/camera_control_event.dart';
 import 'package:smodi/features/camera_control/bloc/camera_control_state.dart';
@@ -26,7 +27,7 @@ class CameraControlBloc extends Bloc<CameraControlEvent, CameraControlState> {
     try {
       final serverUrl = event.serverUrl.replaceFirst('http', 'ws');
       _channel = WebSocketChannel.connect(Uri.parse(serverUrl));
-      print('WebSocket: Connecting to $serverUrl');
+      LoggingService.info('WebSocket: Connecting to $serverUrl');
 
       if (event.serverUrl.isEmpty) {
         throw Exception('Socket server URL is empty.');
@@ -43,32 +44,33 @@ class CameraControlBloc extends Bloc<CameraControlEvent, CameraControlState> {
       }
 
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
-      print('WebSocket: Connecting to $wsUrl');
+      LoggingService.info('WebSocket: Connecting to $wsUrl');
 
       _channel!.sink.add(jsonEncode({'event': 'register_flutter_app'}));
       emit(state.copyWith(isConnected: true));
 
       _channelSubscription = _channel!.stream.listen(
         (message) {
-          print('WebSocket: Message received: $message');
+          LoggingService.info('WebSocket: Message received: $message');
           try {
             final data = jsonDecode(message) as Map<String, dynamic>;
             add(DeviceEventReceived(data));
           } catch (e) {
-            print('WebSocket: Could not parse message json. Error: $e');
+            LoggingService.error(
+                'WebSocket: Could not parse message json. Error: $e');
           }
         },
         onDone: () {
-          print('WebSocket: Channel closed.');
+          LoggingService.info('WebSocket: Channel closed.');
           add(DisconnectFromSocketServer()); // Use an event to handle state change
         },
         onError: (error) {
-          print('WebSocket: Channel error: $error');
+          LoggingService.error('WebSocket: Channel error: $error');
           emit(const CameraControlError('Connection lost.'));
         },
       );
     } catch (e) {
-      print('WebSocket connection error: $e');
+      LoggingService.error('WebSocket connection error: $e');
       emit(const CameraControlError('Failed to connect to the server.'));
     }
   }

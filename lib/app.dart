@@ -32,12 +32,10 @@ class SmodiApp extends StatelessWidget {
       colorScheme: baseTheme.colorScheme.copyWith(
         primary: accentColor,
         secondary: accentColor,
-        background: primaryColor,
         surface: secondaryColor,
+        onSurface: textColor,
         onPrimary: Colors.black,
         onSecondary: Colors.black,
-        onBackground: textColor,
-        onSurface: textColor,
         error: Colors.redAccent,
       ),
       textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme).apply(

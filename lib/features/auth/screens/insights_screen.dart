@@ -215,8 +215,9 @@ class _InsightsChart extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 30,
                 getTitlesWidget: (value, meta) {
-                  if (value == 0 || value % 5 != 0)
+                  if (value == 0 || value % 5 != 0) {
                     return const SizedBox.shrink();
+                  }
                   return Text(value.toInt().toString(),
                       style: const TextStyle(fontSize: 10));
                 },
@@ -228,7 +229,7 @@ class _InsightsChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             getDrawingHorizontalLine: (value) => FlLine(
-              color: theme.dividerColor.withOpacity(0.1),
+              color: theme.dividerColor.withValues(alpha: 0.1),
               strokeWidth: 1,
             ),
           ),

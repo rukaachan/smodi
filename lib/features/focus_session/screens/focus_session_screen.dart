@@ -136,9 +136,7 @@ class _FocusSessionView extends StatelessWidget {
         IconButton(
           icon: const Icon(CupertinoIcons.slider_horizontal_3),
           iconSize: 32,
-          onPressed: () {
-            // TODO: Implement "Konfigurasi Timer" modal from sitemap
-          },
+          onPressed: () {},
         ).animate().scale(),
       ],
     );

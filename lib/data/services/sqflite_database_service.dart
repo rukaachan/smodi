@@ -1,6 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:smodi/core/services/database_service.dart';
+import 'package:smodi/core/services/logging_service.dart';
 import 'package:smodi/data/models/focus_event_model.dart';
 import 'package:smodi/data/models/focus_session_model.dart';
 import 'package:smodi/data/models/local_session_model.dart';
@@ -45,11 +46,12 @@ class SqfliteDatabaseService implements DatabaseService {
     final path = join(dbPath, _dbName);
     _database = await openDatabase(path, version: _dbVersion,
         onCreate: (db, version) async {
-      print('Database onCreate: Creating all tables for version $version...');
+      LoggingService.info(
+          'Database onCreate: Creating all tables for version $version...');
       await db.execute(_createFocusSessionsTable);
       await db.execute(_createFocusEventsTable);
     }, onUpgrade: (db, oldVersion, newVersion) async {
-      print(
+      LoggingService.info(
           'Database onUpgrade: Upgrading from version $oldVersion to $newVersion...');
       if (oldVersion < 4) {
         // Use catchError to prevent crash if column already exists from a failed upgrade
@@ -57,13 +59,15 @@ class SqfliteDatabaseService implements DatabaseService {
             .execute(
                 "ALTER TABLE focus_sessions ADD COLUMN sync_status TEXT DEFAULT 'synced'")
             .catchError((e) {
-          print("Column sync_status may already exist in focus_sessions.");
+          LoggingService.warning(
+              "Column sync_status may already exist in focus_sessions.");
         });
         await db
             .execute(
                 "ALTER TABLE focus_events ADD COLUMN sync_status TEXT DEFAULT 'synced'")
             .catchError((e) {
-          print("Column sync_status may already exist in focus_events.");
+          LoggingService.warning(
+              "Column sync_status may already exist in focus_events.");
         });
       }
     });
@@ -126,26 +130,30 @@ class SqfliteDatabaseService implements DatabaseService {
     _database = null;
     if (await databaseExists(dbPath)) {
       await deleteDatabase(dbPath);
-      print('✅ Local database successfully wiped.');
+      LoggingService.info('Local database successfully wiped.');
     } else {
-      print('Database file not found. Nothing to wipe.');
+      LoggingService.info('Database file not found. Nothing to wipe.');
     }
   }
 
   @override
   Future<void> debugPrintAllData() async {
-    print('\n--- 🕵️ DEBUG: LOCAL DATABASE CONTENTS 🕵️ ---');
+    LoggingService.debug('--- 🕵️ DEBUG: LOCAL DATABASE CONTENTS 🕵️ ---');
     try {
       final db = await _db;
       final sessions = await db.query('focus_sessions');
-      print('--- FOCUS SESSIONS (${sessions.length}) ---');
-      sessions.forEach(print);
+      LoggingService.debug('--- FOCUS SESSIONS (${sessions.length}) ---');
+      for (final s in sessions) {
+        LoggingService.debug(s.toString());
+      }
       final events = await db.query('focus_events');
-      print('\n--- FOCUS EVENTS (${events.length}) ---');
-      events.forEach(print);
-      print('\n--- END OF DATABASE DUMP ---\n');
+      LoggingService.debug('--- FOCUS EVENTS (${events.length}) ---');
+      for (final e in events) {
+        LoggingService.debug(e.toString());
+      }
+      LoggingService.debug('--- END OF DATABASE DUMP ---');
     } catch (e) {
-      print('Could not read database. Error: $e');
+      LoggingService.error('Could not read database. Error: $e');
     }
   }
 

@@ -8,6 +8,7 @@ import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart' as r;
 import 'package:smodi/core/di/injection_container.dart';
 import 'package:smodi/core/services/auth_service.dart';
+import 'package:smodi/core/services/logging_service.dart';
 import 'package:smodi/data/models/sync_payload_model.dart';
 import 'package:smodi/data/repositories/focus_session_repository.dart';
 import 'package:smodi/features/shell_navigator/shell_navigator_screen.dart';
@@ -59,13 +60,13 @@ class _DisplayConnectionQrScreenState extends State<DisplayConnectionQrScreen> {
         throw Exception(
             'Could not get Wi-Fi IP address. Ensure you are connected to a Wi-Fi network.');
       }
-      _server = await io.serve(router, ip, 0, shared: false);
+      _server = await io.serve(router.call, ip, 0, shared: false);
 
       if (mounted) {
         setState(() {
           _qrData = 'http://${_server!.address.host}:${_server!.port}';
           _statusMessage = 'Scan this QR code with your trusted device.';
-          print('✅ Local server listening on $_qrData');
+          LoggingService.info('✅ Local server listening on _qrData');
         });
       }
     } catch (e) {

@@ -68,7 +68,7 @@ class _CameraControlView extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
