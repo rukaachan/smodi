@@ -1,11 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:smodi/data/models/focus_event_model.dart';
 import 'package:smodi/data/repositories/focus_session_repository.dart';
 import 'package:smodi/features/insights/bloc/insights_event.dart';
 import 'package:smodi/features/insights/bloc/insights_state.dart';
-
-// ... imports ...
 
 class InsightsBloc extends Bloc<InsightsEvent, InsightsState> {
   final FocusSessionRepository _focusSessionRepository;

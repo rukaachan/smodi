@@ -5,7 +5,7 @@ import 'package:smodi/core/services/auth_service.dart';
 import 'package:smodi/core/services/database_service.dart';
 // import 'package:smodi/features/settings/screens/voice_motivator_screen.dart';
 // import 'package:smodi/features/sync/screens/discover_devices_screen.dart';
-import 'package:smodi/features/sync/screens/manual_data_transfer_screen.dart';
+// import 'package:smodi/features/sync/screens/manual_data_transfer_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -44,8 +44,8 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('Manual Data Transfer'),
             subtitle: const Text('Force sync all data to/from another device'),
             onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const ManualDataTransferScreen()));
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SizedBox.shrink()));
             },
           ),
           const Divider(),

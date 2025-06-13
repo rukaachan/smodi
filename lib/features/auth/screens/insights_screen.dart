@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,8 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:io';
-
 import 'package:smodi/core/di/injection_container.dart';
 import 'package:smodi/data/models/focus_event_model.dart';
 import 'package:smodi/features/insights/bloc/insights_bloc.dart';
@@ -137,7 +136,7 @@ class _InsightsChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final barColor = theme.colorScheme.primary;
-    final touchedBarColor = barColor.withOpacity(0.8);
+    // final touchedBarColor = barColor.withOpacity(0.8);
 
     // Find the maximum value for the Y-axis range.
     final maxY = (dailyCounts.values.isEmpty

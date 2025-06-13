@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:smodi/core/di/injection_container.dart';
-import 'package:smodi/core/services/auth_service.dart';
+// import 'package:smodi/core/di/injection_container.dart';
+// import 'package:smodi/core/services/auth_service.dart';
 import 'package:smodi/features/auth/screens/camera_control_screen.dart';
 import 'package:smodi/features/auth/screens/insights_screen.dart';
 import 'package:smodi/features/focus_session/screens/focus_session_screen.dart';

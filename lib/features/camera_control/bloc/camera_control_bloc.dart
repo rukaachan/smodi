@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:smodi/data/repositories/focus_session_repository.dart';
 import 'package:smodi/features/camera_control/bloc/camera_control_event.dart';
 import 'package:smodi/features/camera_control/bloc/camera_control_state.dart';
