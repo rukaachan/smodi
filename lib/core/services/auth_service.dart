@@ -1,3 +1,4 @@
+import 'package:smodi/data/models/local_session_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Abstract interface for the Authentication service.
@@ -17,6 +18,18 @@ abstract class AuthService {
   /// Signs in a user with email and password.
   Future<void> signIn({required String email, required String password});
 
+  // Caches the current session
+  Future<void> cacheCurrentSession();
+
+  // Caches a specific session
+  Future<void> cacheSession(LocalSession session);
+
+  /// Retrieves the locally cached session, if available.
+  Future<LocalSession?> getCurrentUserSession();
+
   /// Signs out the current user.
   Future<void> signOut();
+
+  /// Recovers the session from local storage if available.
+  Future<void> recoverSession();
 }

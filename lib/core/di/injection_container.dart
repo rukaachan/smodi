@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
@@ -42,7 +43,7 @@ Future<void> init() async {
 
   // --- Services ---
   sl.registerLazySingleton<DatabaseService>(() => SqfliteDatabaseService());
-  sl.registerLazySingleton<AuthService>(() => SupabaseAuthService(sl()));
+  sl.registerLazySingleton<AuthService>(() => SupabaseAuthService(sl(), sl()));
 
   // --- External Packages ---
   // Register the Connectivity package as a lazy singleton.
@@ -50,4 +51,7 @@ Future<void> init() async {
 
   // Initialize the local database service.
   await sl<DatabaseService>().init();
+
+  // Register the secure storage service for caching sessions.
+  sl.registerLazySingleton(() => const FlutterSecureStorage());
 }

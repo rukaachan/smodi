@@ -5,7 +5,6 @@ import 'package:smodi/features/auth/screens/login_screen.dart';
 import 'package:smodi/features/shell_navigator/shell_navigator_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// This widget is now much simpler, with no state or listeners.
 class AuthGateScreen extends StatelessWidget {
   const AuthGateScreen({super.key});
 
@@ -14,16 +13,15 @@ class AuthGateScreen extends StatelessWidget {
     return StreamBuilder<AuthState>(
       stream: sl<AuthService>().authStateChanges,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
+        // The stream will emit an initial value. If a session was recovered in main.dart,
+        // `snapshot.data.session` will not be null.
         final session = snapshot.data?.session;
+
         if (session != null) {
+          // If a session exists (from login, QR sync, or startup recovery), show the main app.
           return const ShellNavigatorScreen();
         } else {
+          // If no session, show the login screen.
           return const LoginScreen();
         }
       },

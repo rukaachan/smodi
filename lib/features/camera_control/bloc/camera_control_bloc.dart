@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:smodi/data/repositories/focus_session_repository.dart';
 import 'package:smodi/features/camera_control/bloc/camera_control_event.dart';
 import 'package:smodi/features/camera_control/bloc/camera_control_state.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class CameraControlBloc extends Bloc<CameraControlEvent, CameraControlState> {
-  late IO.Socket _socket;
+  WebSocketChannel? _channel;
+  StreamSubscription? _channelSubscription;
+
   final FocusSessionRepository _focusSessionRepository;
 
   CameraControlBloc({required FocusSessionRepository focusSessionRepository})
@@ -22,56 +25,52 @@ class CameraControlBloc extends Bloc<CameraControlEvent, CameraControlState> {
   void _onConnect(
       ConnectToSocketServer event, Emitter<CameraControlState> emit) {
     try {
-      _socket = IO.io(event.serverUrl, <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': true,
-      });
+      final serverUrl = event.serverUrl.replaceFirst('http', 'ws');
+      _channel = WebSocketChannel.connect(Uri.parse(serverUrl));
+      print('WebSocket: Connecting to $serverUrl');
 
-      _socket.onConnect((_) {
-        print('Socket connected');
-        _socket.emit('register_flutter_app');
-        emit(state.copyWith(isConnected: true));
-      });
+      _channel!.sink.add(jsonEncode({'event': 'register_flutter_app'}));
+      emit(state.copyWith(isConnected: true));
 
-      _socket.on('iot_status_update', (data) {
-        print('Received event from server: $data');
-        if (data is Map<String, dynamic>) {
-          // --- THIS IS THE FIX ---
-          // Add the new public event.
-          add(DeviceEventReceived(data));
-        }
-      });
-
-      _socket.onDisconnect((_) {
-        print('Socket disconnected');
-        emit(state.copyWith(
-            isConnected: false,
-            isDeviceAwake: false,
-            lastEvent: {'event': 'Disconnected'}));
-      });
+      _channelSubscription = _channel!.stream.listen(
+        (message) {
+          print('WebSocket: Message received: $message');
+          try {
+            final data = jsonDecode(message) as Map<String, dynamic>;
+            add(DeviceEventReceived(data));
+          } catch (e) {
+            print('WebSocket: Could not parse message json. Error: $e');
+          }
+        },
+        onDone: () {
+          print('WebSocket: Channel closed.');
+          add(DisconnectFromSocketServer()); // Use an event to handle state change
+        },
+        onError: (error) {
+          print('WebSocket: Channel error: $error');
+          emit(const CameraControlError('Connection lost.'));
+        },
+      );
     } catch (e) {
-      print('Socket connection error: $e');
+      print('WebSocket connection error: $e');
       emit(const CameraControlError('Failed to connect to the server.'));
     }
   }
 
   void _onSendCommand(
       SendCommandToDevice event, Emitter<CameraControlState> emit) {
-    if (_socket.connected) {
-      _socket.emit('command_to_iot', {'command': event.command});
+    if (_channel != null) {
+      final commandPayload = jsonEncode({
+        'event': 'command_to_iot',
+        'data': {'command': event.command}
+      });
+      _channel!.sink.add(commandPayload);
     }
   }
 
-  // --- THIS IS THE FIX ---
-  // Renamed the handler method for clarity and to match the new event.
   void _onDeviceEventReceived(
       DeviceEventReceived event, Emitter<CameraControlState> emit) {
-    // First, save the event to the database via the repository.
-    // We need to know the active session ID, which we can get from the FocusSessionBloc later.
-    // For now, we'll pass null.
     _focusSessionRepository.saveFocusEvent(event.eventData, null);
-
-    // Then, update the UI state as before.
     emit(state.copyWith(
       lastEvent: event.eventData,
       isDeviceAwake: event.eventData['isAwake'] ?? state.isDeviceAwake,
@@ -80,13 +79,20 @@ class CameraControlBloc extends Bloc<CameraControlEvent, CameraControlState> {
 
   void _onDisconnect(
       DisconnectFromSocketServer event, Emitter<CameraControlState> emit) {
-    _socket.dispose();
+    _channelSubscription?.cancel();
+    _channel?.sink.close();
+    _channel = null;
+    _channelSubscription = null;
     emit(const CameraControlInitial());
   }
 
   @override
   Future<void> close() {
-    _socket.dispose();
+    // --- THIS IS THE FIX ---
+    // The close method should only clean up resources. It should not emit states.
+    // We call the _onDisconnect handler via an event if needed, but cleanup is primary.
+    _channelSubscription?.cancel();
+    _channel?.sink.close();
     return super.close();
   }
 }

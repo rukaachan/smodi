@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:smodi/core/services/database_service.dart';
 import 'package:smodi/data/models/focus_event_model.dart';
 import 'package:smodi/data/models/focus_session_model.dart';
+import 'package:smodi/data/models/sync_payload_model.dart';
 
 class SqfliteDatabaseService implements DatabaseService {
   Database? _database;
@@ -124,5 +125,37 @@ class SqfliteDatabaseService implements DatabaseService {
     return List.generate(maps.length, (i) {
       return FocusEvent.fromMap(maps[i]);
     });
+  }
+
+  @override
+  Future<List<FocusSession>> getAllFocusSessions() async {
+    final database = await _db;
+    final List<Map<String, dynamic>> maps =
+        await database.query('focus_sessions');
+    return List.generate(maps.length, (i) => FocusSession.fromMap(maps[i]));
+  }
+
+  @override
+  Future<void> mergeSyncPayload(SyncPayload payload) async {
+    final database = await _db;
+    await database.transaction((txn) async {
+      // Use a batch for efficient bulk operations
+      final batch = txn.batch();
+
+      // Merge sessions
+      for (final session in payload.sessions) {
+        batch.insert('focus_sessions', session.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+
+      // Merge events
+      for (final event in payload.events) {
+        batch.insert('focus_events', event.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+
+      await batch.commit(noResult: true);
+    });
+    print('✅ Sync payload merged into local DB.');
   }
 }

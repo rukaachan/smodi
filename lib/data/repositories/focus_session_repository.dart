@@ -1,9 +1,11 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:smodi/core/services/database_service.dart';
 import 'package:smodi/data/models/focus_session_model.dart';
+import 'package:smodi/data/models/local_session_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:smodi/data/models/focus_event_model.dart';
 import 'package:uuid/uuid.dart';
+import 'package:smodi/data/models/sync_payload_model.dart';
 
 /// Repository for managing focus session data.
 ///
@@ -75,6 +77,28 @@ class FocusSessionRepository {
 
   Future<List<FocusEvent>> getAllFocusEvents() async {
     return await _localDatabase.getAllFocusEvents();
+  }
+
+  Future<List<FocusSession>> getAllFocusSessions() async {
+    return await _localDatabase.getAllFocusSessions();
+  }
+
+  Future<SyncPayload> getFullSyncPayload() async {
+    final sessions = await _localDatabase.getAllFocusSessions();
+    final events = await _localDatabase.getAllFocusEvents();
+
+    // The `user` object is no longer created here. It will be added
+    // in the UI layer (`generate_qr_screen.dart`) which has access to the AuthService.
+    // We pass a placeholder user object which will be replaced.
+    return SyncPayload(
+      user: const LocalSession(userId: '', email: '', refreshToken: ''),
+      sessions: sessions,
+      events: events,
+    );
+  }
+
+  Future<void> mergeSyncPayload(SyncPayload payload) async {
+    await _localDatabase.mergeSyncPayload(payload);
   }
 }
 
