@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smodi/core/di/injection_container.dart';
 import 'package:smodi/core/services/auth_service.dart';
 import 'package:smodi/features/auth/screens/login_screen.dart';
+import 'package:smodi/features/home/home_screen.dart';
 import 'package:smodi/features/shell_navigator/shell_navigator_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -28,7 +29,7 @@ class AppShell extends StatelessWidget {
         }
 
         // As long as there is a session, show the main app.
-        return const ShellNavigatorScreen();
+        return const HomeScreen();
       },
     );
   }
