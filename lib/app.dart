@@ -22,6 +22,12 @@ class SmodiApp extends StatelessWidget {
     const secondaryColor = Color(0xFF112240); // Lighter Navy
     const accentColor = Color(0xFF64FFDA); // Neon Mint
     const textColor = Color(0xFFCCD6F6); // Light Slate
+
+    const List<Color> splashGradient = [
+      Color(0xFFDFF2F1),
+      Color(0xFFFDB69F),
+      Color(0xFF011D3A),
+    ];
     // const subtleTextColor = Color(0xFF8892B0); // Slate
 
     final baseTheme = ThemeData(brightness: brightness);
